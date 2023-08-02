@@ -182,12 +182,32 @@ st.markdown("""Be sure to delete any empty rows before running the forecast by s
             Day-to-day data should have at least 7 rows, weekly data at least 52 rows, monthly data at least 12 rows, 
             quarterly data at least 4 rows, and yearly data at least 2 rows.""")
 
-st.markdown("If you run into unexpected errors while forecasting, try changing start period or complexity settings.")
+st.markdown("If you run into unexpected errors while forecasting, try changing start period or complexity settings. Lower volumes of data may not work with higher complexity levels.")
 
 st.divider()
 
 # Run the forecast when the "Run" button is clicked
 if st.button("Run"):
+
+    ###### Data cleaning and formatting
+    edited_table["Period"] = edited_table["Period"].str.replace(" ", "")
+    edited_table["Period"] = edited_table["Period"].str.strip()
+
+    if granularity == "day" or granularity == "week":
+        edited_table["Period"] = pd.to_datetime(edited_table["Period"], format="%m-%d-%Y")
+    elif granularity == "month":
+        edited_table["Period"] = pd.to_datetime(edited_table["Period"], format="%b-%y")
+    elif granularity == "year":
+        edited_table["Period"] = pd.to_datetime(edited_table["Period"], format="%Y")
+
+    if granularity == "day" or granularity == "week":
+        edited_table["Period"] = edited_table["Period"].dt.strftime("%m-%d-%Y")
+    elif granularity == "month":
+        edited_table["Period"] = edited_table["Period"].dt.strftime("%b-%y")
+    elif granularity == "year":
+        edited_table["Period"] = edited_table["Period"].dt.strftime("%Y")
+
+    ###### Run the forecast
     if snapshot_values and complexity and granularity and data_start and start_period and end_period:
         if (granularity == "day" and len(snapshot_values) >= 7) or (granularity == "week" and len(snapshot_values) >= 52) or (granularity == "month" and len(snapshot_values) >= 12) or (granularity == "quarter" and len(snapshot_values) >= 4) or (granularity == "year" and len(snapshot_values) >= 2):
             data = snapshot_values
