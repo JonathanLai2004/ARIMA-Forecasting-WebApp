@@ -26,12 +26,13 @@ model_settings = {                               #
 
 ############ Function to create a table of forecasted values using ARIMA ############
 
-def forecast(end_period = len(model_settings["model_setting"]['time_period_labels'])-1,   # user-configurable, int input (5)
-             start_period = model_settings["model_setting"]['time_period_labels'].index(model_settings["start_forecasts"]),  # user-configurable, int input (10)
-             complexity = "default",                                                      # user-configurable, options   ('medium')
+def forecast(end_period = len(model_settings["model_setting"]['time_period_labels'])-1,   # user-config, int input       (5)
+             start_period = model_settings["model_setting"]['time_period_labels'].index(model_settings["start_forecasts"]),  # user-config, int input (10)
+             complexity = "default",                                                      # user-config, options         ('medium')
              data = snapshot_values,                                                      # import list input            ([2,4,8,4,8,16])
+             data_start = model_settings["model_setting"]['time_period_labels'][0],       # import string input          ('Jun-12)
              granularity = model_settings["time_granularity"],                            # import string input          ('month')
-             data_start = model_settings["model_setting"]['time_period_labels'][0]):      # import string input          ('Jun-12)
+             seasonality_length = model_settings["time_granularity"]):                    # user-config, import string input, int input ('month')    
     
     ###### Creating two main components of the output as separate lists
     
@@ -83,6 +84,11 @@ def forecast(end_period = len(model_settings["model_setting"]['time_period_label
         data_start_year = data_start.year
         for period in range(start_period, end_period+1):      
             dates_of_forecast_values.append(data_start_year + period)
+
+    ###### Setting custom seasonality length if specified (uses seasonality_length)
+
+    if seasonality_length != granularity:
+        seasonality_length = seasonality_length
     
     ###### Complexity and order settings for auto_arima (uses complexity)
     
@@ -193,6 +199,14 @@ with col2:
     granularity = st.selectbox("Granularity", granularity_options)
 
     data_start = edited_table.iloc[0]["Period"]
+
+    seasonality_length = st.selectbox("seasonality_length", ["default"] + ["Custom"])
+    if seasonality_length == "Custom":
+        seasonality_length = st.number_input("Custom seasonality_length", value=1, step=1)
+    if seasonality_length == "default":
+        seasonality_length = granularity
+
+    st.markdown("""seasonality_length is the number of periods in a season, where a length of 1 is non-seasonal.""")
 
 st.write("")
 st.write("")
