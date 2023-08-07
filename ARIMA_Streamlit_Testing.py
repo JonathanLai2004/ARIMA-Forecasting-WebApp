@@ -202,7 +202,7 @@ with col2:
 
     seasonality_length = st.selectbox("Seasonality Length", ["default"] + ["Custom"])
     if seasonality_length == "Custom":
-        seasonality_length = st.number_input("Custom seasonality_length", value=1, step=1)
+        seasonality_length = st.number_input("Custom Seasonality Length", value=1, step=1)
     if seasonality_length == "default":
         seasonality_length = granularity
 
