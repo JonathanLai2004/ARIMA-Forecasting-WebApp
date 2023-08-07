@@ -189,8 +189,8 @@ with col2:
     st.subheader("Forecast Settings")
 
     ###### Input elements for the various parameters
-    start_period = st.number_input("Start Period (as an index)", value=0, step=1)
-    end_period = st.number_input("End Period (as an index)", value=0, step=1)
+    start_period = st.number_input("Start Period (as an index)", value=1, step=1, min_value=1)
+    end_period = st.number_input("End Period (as an index)", value=start_period+1, step=1, min_value=start_period)
 
     complexity_options = ["default", "low", "medium", "high"]
     complexity = st.selectbox("Complexity", complexity_options)
@@ -202,7 +202,7 @@ with col2:
 
     seasonality_length = st.selectbox("Seasonality Length", ["default"] + ["Custom"])
     if seasonality_length == "Custom":
-        seasonality_length = st.number_input("Custom Seasonality Length", value=1, step=1)
+        seasonality_length = st.number_input("Custom Seasonality Length", value=1, step=1, min_value=1)
     if seasonality_length == "default":
         seasonality_length = granularity
 
