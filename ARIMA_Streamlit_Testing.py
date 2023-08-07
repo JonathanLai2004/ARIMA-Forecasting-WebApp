@@ -132,6 +132,24 @@ def forecast(end_period = len(model_settings["model_setting"]['time_period_label
     
     return(forecast_table)
 
+############ Custom function to convert quarter format to datetime ############
+def quarter_to_datetime(quarter_str):
+    quarter, year = quarter_str.split("-")
+    year = int(year)
+    quarter_to_month = {
+        "Q1": 1,
+        "Q2": 4,
+        "Q3": 7,
+        "Q4": 10
+    }
+    start_month = quarter_to_month[quarter]
+    return pd.to_datetime(f"{start_month}-01-{year}", format="%m-%d-%Y")
+
+# Custom function to convert datetime to quarter format
+def datetime_to_quarter(dt):
+    quarter = (dt.month - 1) // 3 + 1
+    return f"Q{quarter}-{dt.year}"
+
 ############ Create a streamlit app to test the function ############
 
 # Title of the webpage
@@ -182,7 +200,9 @@ st.markdown("""Be sure to delete any empty rows before running the forecast by s
             Day-to-day data should have at least 7 rows, weekly data at least 52 rows, monthly data at least 12 rows, 
             quarterly data at least 4 rows, and yearly data at least 2 rows.""")
 
-st.markdown("If you run into unexpected errors while forecasting, try changing start period or complexity settings. Lower volumes of data may not work with higher complexity levels.")
+st.markdown("""If you run into unexpected errors while forecasting, try changing start period or complexity settings. 
+            Lower volumes of data may not work with higher complexity levels.
+            Missing dates and holes in the data may also cause unexpected patterns in the forecast.""")
 
 st.divider()
 
@@ -207,9 +227,36 @@ if st.button("Run"):
     elif granularity == "year":
         edited_table["Period"] = edited_table["Period"].dt.strftime("%Y")
 
+    ###### Sorting table chronologically
+    # Convert the Period column to datetime
+    if granularity == "day" or granularity == "week":
+        edited_table["Period"] = pd.to_datetime(edited_table["Period"], format="%m-%d-%Y")
+    elif granularity == "month":
+        edited_table["Period"] = pd.to_datetime(edited_table["Period"], format="%b-%y")
+    elif granularity == "quarter":
+        edited_table["Period"] = edited_table["Period"].apply(quarter_to_datetime)
+    elif granularity == "year":
+        edited_table["Period"] = pd.to_datetime(edited_table["Period"], format="%Y")
+    # Sort the table chronologically based on the Periods
+    edited_table = edited_table.sort_values(by="Period")
+    # Convert the datetime objects back to the desired string format
+    if granularity == "day" or granularity == "week":
+        edited_table["Period"] = edited_table["Period"].dt.strftime("%m-%d-%Y")
+    elif granularity == "month":
+        edited_table["Period"] = edited_table["Period"].dt.strftime("%b-%y")
+    elif granularity == "quarter":
+        edited_table["Period"] = edited_table["Period"].apply(datetime_to_quarter)
+    elif granularity == "year":
+        edited_table["Period"] = edited_table["Period"].dt.strftime("%Y")
+    # Now, edited_table is sorted chronologically and contains the date markers in the desired string format
+
     ###### Run the forecast
     if snapshot_values and complexity and granularity and data_start and start_period and end_period:
         if (granularity == "day" and len(snapshot_values) >= 7) or (granularity == "week" and len(snapshot_values) >= 52) or (granularity == "month" and len(snapshot_values) >= 12) or (granularity == "quarter" and len(snapshot_values) >= 4) or (granularity == "year" and len(snapshot_values) >= 2):
+
+            snapshot_values = edited_table["snapshot_values"].tolist()
+            Periods = edited_table["Period"].tolist()
+
             data = snapshot_values
             start_time = time.time()
             result = forecast(start_period=start_period,
@@ -229,6 +276,29 @@ if st.button("Run"):
                 merged_data = pd.merge(edited_table, result, on="Period", how="outer")
             if granularity == "year":
                 merged_data = pd.concat([edited_table, result], axis=0)
+
+            ###### Sorting merged_data chronologically
+            # Convert the Period column to datetime
+            if granularity == "day" or granularity == "week":
+                merged_data["Period"] = pd.to_datetime(merged_data["Period"], format="%m-%d-%Y")
+            elif granularity == "month":
+                merged_data["Period"] = pd.to_datetime(merged_data["Period"], format="%b-%y")
+            elif granularity == "quarter":
+                merged_data["Period"] = merged_data["Period"].apply(quarter_to_datetime)
+            elif granularity == "year":
+                merged_data["Period"] = pd.to_datetime(merged_data["Period"], format="%Y")
+            # Sort the table chronologically based on the Periods
+            merged_data = merged_data.sort_values(by="Period")
+            # Convert the datetime objects back to the desired string format
+            if granularity == "day" or granularity == "week":
+                merged_data["Period"] = merged_data["Period"].dt.strftime("%m-%d-%Y")
+            elif granularity == "month":
+                merged_data["Period"] = merged_data["Period"].dt.strftime("%b-%y")
+            elif granularity == "quarter":
+                merged_data["Period"] = merged_data["Period"].apply(datetime_to_quarter)
+            elif granularity == "year":
+                merged_data["Period"] = merged_data["Period"].dt.strftime("%Y")
+            # Now, merged_data is sorted chronologically and contains the date markers in the desired string format
 
             # Plot the line chart using Plotly
 
