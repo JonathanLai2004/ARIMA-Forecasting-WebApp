@@ -200,7 +200,7 @@ with col2:
 
     data_start = edited_table.iloc[0]["Period"]
 
-    seasonality_length = st.selectbox("seasonality_length", ["default"] + ["Custom"])
+    seasonality_length = st.selectbox("Seasonality_length", ["default"] + ["Custom"])
     if seasonality_length == "Custom":
         seasonality_length = st.number_input("Custom seasonality_length", value=1, step=1)
     if seasonality_length == "default":
