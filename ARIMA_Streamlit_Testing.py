@@ -278,6 +278,7 @@ if st.button("Run"):
                             complexity=complexity,
                             data=data,
                             granularity=granularity,
+                            seasonality_length=seasonality_length,
                             data_start=data_start)
             end_time = time.time()
             execution_time = end_time - start_time
