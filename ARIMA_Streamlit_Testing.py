@@ -42,27 +42,31 @@ def forecast(end_period = len(model_settings["model_setting"]['time_period_label
     ###### Creating formatted dates for the result table (uses end_period, start_period, data_start)
     
     if granularity == "day":                                    # format of %m-%d-%Y ("06-12-2012")
-        seasonality_length = 7
+        if seasonality_length == granularity:
+            seasonality_length = 7
         data_start = pd.to_datetime(data_start)                   
         for period in range(start_period,end_period+1):
             new_date_obj = data_start + pd.DateOffset(days=period)
             new_date_str = new_date_obj.strftime("%m-%d-%Y")
             dates_of_forecast_values.append(new_date_str)
     if granularity == "week":                                    # format of %m-%d-%Y ("06-12-2012")
-        seasonality_length = 52
+        if seasonality_length == granularity:
+            seasonality_length = 52
         data_start = pd.to_datetime(data_start)
         for period in range(start_period,end_period+1):
             new_date_obj = data_start + pd.DateOffset(weeks=period)
             new_date_str = new_date_obj.strftime("%m-%d-%Y")
             dates_of_forecast_values.append(new_date_str)
     if granularity == "month":                                   # format of %b-%y ("Jun-12")
-        seasonality_length = 12
+        if seasonality_length == granularity:
+            seasonality_length = 12
         data_start = pd.to_datetime(data_start, format="%b-%y")
         data_start_month_year = data_start.strftime("%b-%y")
         for period in range(start_period, end_period+1):      
             dates_of_forecast_values.append((data_start + pd.DateOffset(months=period)).strftime("%b-%y"))
     if granularity == "quarter":                                 # custom format of "Q1-2020"
-        seasonality_length = 4
+        if seasonality_length == granularity:
+            seasonality_length = 4
         quarter, year = data_start.split("-")
         year = int(year)
         quarter_to_month = {
@@ -79,7 +83,8 @@ def forecast(end_period = len(model_settings["model_setting"]['time_period_label
             new_quarter_year_str = f"Q{new_quarter}-{new_date_obj.year}"
             dates_of_forecast_values.append(new_quarter_year_str)
     if granularity == "year":                                     # format of %Y ("2012")
-        seasonality_length = 1
+        if seasonality_length == granularity:
+            seasonality_length = 1
         data_start = pd.to_datetime(data_start, format="%Y")
         data_start_year = data_start.year
         for period in range(start_period, end_period+1):      
@@ -91,7 +96,7 @@ def forecast(end_period = len(model_settings["model_setting"]['time_period_label
         seasonality_length = seasonality_length
     
     ###### Complexity and order settings for auto_arima (uses complexity)
-    
+
     if complexity == "default":
         start_p = 2
         max_p = 5
@@ -200,11 +205,11 @@ with col2:
 
     data_start = edited_table.iloc[0]["Period"]
 
-    seasonality_select = st.selectbox("Seasonality Length", ["default"] + ["Custom"])
-    if seasonality_select == "Custom":
-        seasonality_length = st.number_input("Custom Seasonality Length", value=1, step=1, min_value=1)
-    if seasonality_select == "default":
+    seasonality_select1 = st.selectbox("Seasonality Length", ["default"] + ["Custom"])
+    if seasonality_select1 == "default":
         seasonality_length = granularity
+    if seasonality_select1 == "Custom":
+        seasonality_length = st.number_input("Custom Seasonality Length", value=1, step=1, min_value=1)
 
     st.markdown("""Seasonality Length is the number of periods in a season, where a length of 1 is non-seasonal.""")
 
