@@ -200,10 +200,10 @@ with col2:
 
     data_start = edited_table.iloc[0]["Period"]
 
-    seasonality_length = st.selectbox("Seasonality Length", ["default"] + ["Custom"])
-    if seasonality_length == "Custom":
+    seasonality_select = st.selectbox("Seasonality Length", ["default"] + ["Custom"])
+    if seasonality_select == "Custom":
         seasonality_length = st.number_input("Custom Seasonality Length", value=1, step=1, min_value=1)
-    if seasonality_length == "default":
+    if seasonality_select == "default":
         seasonality_length = granularity
 
     st.markdown("""Seasonality Length is the number of periods in a season, where a length of 1 is non-seasonal.""")
