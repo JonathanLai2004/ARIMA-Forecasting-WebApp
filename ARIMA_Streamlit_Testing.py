@@ -40,55 +40,104 @@ def forecast(end_period = len(model_settings["model_setting"]['time_period_label
     forecast_values = []
     
     ###### Creating formatted dates for the result table (uses end_period, start_period, data_start)
-    
-    if granularity == "day":                                    # format of %m-%d-%Y ("06-12-2012")
-        if seasonality_length == granularity:
-            seasonality_length = 7
-        data_start = pd.to_datetime(data_start)                   
-        for period in range(start_period,end_period+1):
-            new_date_obj = data_start + pd.DateOffset(days=period)
-            new_date_str = new_date_obj.strftime("%m-%d-%Y")
-            dates_of_forecast_values.append(new_date_str)
-    if granularity == "week":                                    # format of %m-%d-%Y ("06-12-2012")
-        if seasonality_length == granularity:
-            seasonality_length = 52
-        data_start = pd.to_datetime(data_start)
-        for period in range(start_period,end_period+1):
-            new_date_obj = data_start + pd.DateOffset(weeks=period)
-            new_date_str = new_date_obj.strftime("%m-%d-%Y")
-            dates_of_forecast_values.append(new_date_str)
-    if granularity == "month":                                   # format of %b-%y ("Jun-12")
-        if seasonality_length == granularity:
-            seasonality_length = 12
-        data_start = pd.to_datetime(data_start, format="%b-%y")
-        data_start_month_year = data_start.strftime("%b-%y")
-        for period in range(start_period, end_period+1):      
-            dates_of_forecast_values.append((data_start + pd.DateOffset(months=period)).strftime("%b-%y"))
-    if granularity == "quarter":                                 # custom format of "Q1-2020"
-        if seasonality_length == granularity:
-            seasonality_length = 4
-        quarter, year = data_start.split("-")
-        year = int(year)
-        quarter_to_month = {
-            "Q1": 1,
-            "Q2": 4,
-            "Q3": 7,
-            "Q4": 10
-        }
-        start_month = quarter_to_month[quarter]
-        start_date = pd.to_datetime(f"{start_month}-01-{year}", format="%m-%d-%Y")
-        for period in range(start_period,end_period+1):
-            new_date_obj = start_date + pd.DateOffset(months=period * 3)
-            new_quarter = (new_date_obj.month - 1) // 3 + 1
-            new_quarter_year_str = f"Q{new_quarter}-{new_date_obj.year}"
-            dates_of_forecast_values.append(new_quarter_year_str)
-    if granularity == "year":                                     # format of %Y ("2012")
-        if seasonality_length == granularity:
-            seasonality_length = 1
-        data_start = pd.to_datetime(data_start, format="%Y")
-        data_start_year = data_start.year
-        for period in range(start_period, end_period+1):      
-            dates_of_forecast_values.append(data_start_year + period)
+    if start_period <= len(snapshot_values):
+        if granularity == "day":                                    # format of %m-%d-%Y ("06-12-2012")
+            if seasonality_length == granularity:
+                seasonality_length = 7
+            data_start = pd.to_datetime(data_start)                   
+            for period in range(start_period,end_period+1):
+                new_date_obj = data_start + pd.DateOffset(days=period)
+                new_date_str = new_date_obj.strftime("%m-%d-%Y")
+                dates_of_forecast_values.append(new_date_str)
+        elif granularity == "week":                                    # format of %m-%d-%Y ("06-12-2012")
+            if seasonality_length == granularity:
+                seasonality_length = 52
+            data_start = pd.to_datetime(data_start)
+            for period in range(start_period,end_period+1):
+                new_date_obj = data_start + pd.DateOffset(weeks=period)
+                new_date_str = new_date_obj.strftime("%m-%d-%Y")
+                dates_of_forecast_values.append(new_date_str)
+        elif granularity == "month":                                   # format of %b-%y ("Jun-12")
+            if seasonality_length == granularity:
+                seasonality_length = 12
+            data_start = pd.to_datetime(data_start, format="%b-%y")
+            data_start_month_year = data_start.strftime("%b-%y")
+            for period in range(start_period, end_period+1):      
+                dates_of_forecast_values.append((data_start + pd.DateOffset(months=period)).strftime("%b-%y"))
+        elif granularity == "quarter":                                 # custom format of "Q1-2020"
+            if seasonality_length == granularity:
+                seasonality_length = 4
+            quarter, year = data_start.split("-")
+            year = int(year)
+            quarter_to_month = {
+                "Q1": 1,
+                "Q2": 4,
+                "Q3": 7,
+                "Q4": 10
+            }
+            start_month = quarter_to_month[quarter]
+            start_date = pd.to_datetime(f"{start_month}-01-{year}", format="%m-%d-%Y")
+            for period in range(start_period,end_period+1):
+                new_date_obj = start_date + pd.DateOffset(months=period * 3)
+                new_quarter = (new_date_obj.month - 1) // 3 + 1
+                new_quarter_year_str = f"Q{new_quarter}-{new_date_obj.year}"
+                dates_of_forecast_values.append(new_quarter_year_str)
+        elif granularity == "year":                                     # format of %Y ("2012")
+            if seasonality_length == granularity:
+                seasonality_length = 1
+            data_start = pd.to_datetime(data_start, format="%Y")
+            data_start_year = data_start.year
+            for period in range(start_period, end_period+1):      
+                dates_of_forecast_values.append(data_start_year + period)
+    elif start_period > len(snapshot_values):
+        if granularity == "day":                                    # format of %m-%d-%Y ("06-12-2012")
+            if seasonality_length == granularity:
+                seasonality_length = 7
+            data_start = pd.to_datetime(data_start)                   
+            for period in range(len(snapshot_values),end_period+1):
+                new_date_obj = data_start + pd.DateOffset(days=period)
+                new_date_str = new_date_obj.strftime("%m-%d-%Y")
+                dates_of_forecast_values.append(new_date_str)
+        elif granularity == "week":                                    # format of %m-%d-%Y ("06-12-2012")
+            if seasonality_length == granularity:
+                seasonality_length = 52
+            data_start = pd.to_datetime(data_start)
+            for period in range(len(snapshot_values),end_period+1):
+                new_date_obj = data_start + pd.DateOffset(weeks=period)
+                new_date_str = new_date_obj.strftime("%m-%d-%Y")
+                dates_of_forecast_values.append(new_date_str)
+        elif granularity == "month":                                   # format of %b-%y ("Jun-12")
+            if seasonality_length == granularity:
+                seasonality_length = 12
+            data_start = pd.to_datetime(data_start, format="%b-%y")
+            data_start_month_year = data_start.strftime("%b-%y")
+            for period in range(len(snapshot_values), end_period+1):      
+                dates_of_forecast_values.append((data_start + pd.DateOffset(months=period)).strftime("%b-%y"))
+        elif granularity == "quarter":                                 # custom format of "Q1-2020"
+            if seasonality_length == granularity:
+                seasonality_length = 4
+            quarter, year = data_start.split("-")
+            year = int(year)
+            quarter_to_month = {
+                "Q1": 1,
+                "Q2": 4,
+                "Q3": 7,
+                "Q4": 10
+            }
+            start_month = quarter_to_month[quarter]
+            start_date = pd.to_datetime(f"{start_month}-01-{year}", format="%m-%d-%Y")
+            for period in range(len(snapshot_values),end_period+1):
+                new_date_obj = start_date + pd.DateOffset(months=period * 3)
+                new_quarter = (new_date_obj.month - 1) // 3 + 1
+                new_quarter_year_str = f"Q{new_quarter}-{new_date_obj.year}"
+                dates_of_forecast_values.append(new_quarter_year_str)
+        elif granularity == "year":                                     # format of %Y ("2012")
+            if seasonality_length == granularity:
+                seasonality_length = 1
+            data_start = pd.to_datetime(len(snapshot_values), format="%Y")
+            data_start_year = data_start.year
+            for period in range(start_period, end_period+1):      
+                dates_of_forecast_values.append(data_start_year + period)
 
     ###### Setting custom seasonality length if specified (uses seasonality_length)
 
@@ -128,9 +177,13 @@ def forecast(end_period = len(model_settings["model_setting"]['time_period_label
     
     # fit the model on the data
     arima_model.fit(training_data)
-    
+
     # forecast the values for the specified periods
-    forecast_values = arima_model.predict(n_periods = end_period - start_period + 1)
+    if start_period <= len(snapshot_values):
+        forecast_values = arima_model.predict(n_periods = end_period - start_period + 1)
+    elif start_period > len(snapshot_values):
+        forecast_values = arima_model.predict(n_periods = end_period - len(snapshot_values) + 1)
+        forecast_values[:(start_period-len(snapshot_values))+1] = None
     
     ###### Combine the two into a pandas table with both the period labels and predicted values
 
