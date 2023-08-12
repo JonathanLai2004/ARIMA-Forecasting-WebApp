@@ -216,6 +216,11 @@ def datetime_to_quarter(dt):
     quarter = (dt.month - 1) // 3 + 1
     return f"Q{quarter}-{dt.year}"
 
+# function to convert df to csv
+
+def convert_df(df):
+    return df.to_csv().encode('utf-8')
+
 ############ Create a streamlit app to test the function ############
 
 # Title of the webpage
@@ -523,6 +528,15 @@ if st.button("Run All"):
             # Display the table of forecasted values
             st.subheader("Historical and Forecasted Values")
             st.dataframe(merged_data)
+
+            # Allow user to download results
+            csv = convert_df(merged_data)
+            st.download_button(
+                "Download Results",
+                csv,
+                "arima_results.csv",
+                "text/csv"
+            )
 
         except:
             st.error("Not enough training data to forecast with current complexity and seasonality length.")
