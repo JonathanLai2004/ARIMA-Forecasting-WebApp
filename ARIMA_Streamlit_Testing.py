@@ -34,169 +34,195 @@ def forecast(end_period = len(model_settings["model_setting"]['time_period_label
              granularity = model_settings["time_granularity"],                            # import string input          ('month')
              seasonality_length = model_settings["time_granularity"]):                    # user-config, import string input, int input ('month')    
     
+    status = "Success"
+
     ###### Creating two main components of the output as separate lists
-    
+
     dates_of_forecast_values = []
     forecast_values = []
-    
-    ###### Creating formatted dates for the result table (uses end_period, start_period, data_start)
-    if start_period <= len(snapshot_values):
-        if granularity == "day":                                    # format of %m-%d-%Y ("06-12-2012")
-            if seasonality_length == granularity:
-                seasonality_length = 7
-            data_start = pd.to_datetime(data_start)                   
-            for period in range(start_period,end_period+1):
-                new_date_obj = data_start + pd.DateOffset(days=period)
-                new_date_str = new_date_obj.strftime("%m-%d-%Y")
-                dates_of_forecast_values.append(new_date_str)
-        elif granularity == "week":                                    # format of %m-%d-%Y ("06-12-2012")
-            if seasonality_length == granularity:
-                seasonality_length = 52
-            data_start = pd.to_datetime(data_start)
-            for period in range(start_period,end_period+1):
-                new_date_obj = data_start + pd.DateOffset(weeks=period)
-                new_date_str = new_date_obj.strftime("%m-%d-%Y")
-                dates_of_forecast_values.append(new_date_str)
-        elif granularity == "month":                                   # format of %b-%y ("Jun-12")
-            if seasonality_length == granularity:
-                seasonality_length = 12
-            data_start = pd.to_datetime(data_start, format="%b-%y")
-            data_start_month_year = data_start.strftime("%b-%y")
-            for period in range(start_period, end_period+1):      
-                dates_of_forecast_values.append((data_start + pd.DateOffset(months=period)).strftime("%b-%y"))
-        elif granularity == "quarter":                                 # custom format of "Q1-2020"
-            if seasonality_length == granularity:
-                seasonality_length = 4
-            quarter, year = data_start.split("-")
-            year = int(year)
-            quarter_to_month = {
-                "Q1": 1,
-                "Q2": 4,
-                "Q3": 7,
-                "Q4": 10
-            }
-            start_month = quarter_to_month[quarter]
-            start_date = pd.to_datetime(f"{start_month}-01-{year}", format="%m-%d-%Y")
-            for period in range(start_period,end_period+1):
-                new_date_obj = start_date + pd.DateOffset(months=period * 3)
-                new_quarter = (new_date_obj.month - 1) // 3 + 1
-                new_quarter_year_str = f"Q{new_quarter}-{new_date_obj.year}"
-                dates_of_forecast_values.append(new_quarter_year_str)
-        elif granularity == "year":                                     # format of %Y ("2012")
-            if seasonality_length == granularity:
-                seasonality_length = 1
-            data_start = pd.to_datetime(data_start, format="%Y")
-            data_start_year = data_start.year
-            for period in range(start_period, end_period+1):      
-                dates_of_forecast_values.append(data_start_year + period)
-    elif start_period > len(snapshot_values):
-        if granularity == "day":                                    # format of %m-%d-%Y ("06-12-2012")
-            if seasonality_length == granularity:
-                seasonality_length = 7
-            data_start = pd.to_datetime(data_start)                   
-            for period in range(len(snapshot_values),end_period+1):
-                new_date_obj = data_start + pd.DateOffset(days=period)
-                new_date_str = new_date_obj.strftime("%m-%d-%Y")
-                dates_of_forecast_values.append(new_date_str)
-        elif granularity == "week":                                    # format of %m-%d-%Y ("06-12-2012")
-            if seasonality_length == granularity:
-                seasonality_length = 52
-            data_start = pd.to_datetime(data_start)
-            for period in range(len(snapshot_values),end_period+1):
-                new_date_obj = data_start + pd.DateOffset(weeks=period)
-                new_date_str = new_date_obj.strftime("%m-%d-%Y")
-                dates_of_forecast_values.append(new_date_str)
-        elif granularity == "month":                                   # format of %b-%y ("Jun-12")
-            if seasonality_length == granularity:
-                seasonality_length = 12
-            data_start = pd.to_datetime(data_start, format="%b-%y")
-            data_start_month_year = data_start.strftime("%b-%y")
-            for period in range(len(snapshot_values), end_period+1):      
-                dates_of_forecast_values.append((data_start + pd.DateOffset(months=period)).strftime("%b-%y"))
-        elif granularity == "quarter":                                 # custom format of "Q1-2020"
-            if seasonality_length == granularity:
-                seasonality_length = 4
-            quarter, year = data_start.split("-")
-            year = int(year)
-            quarter_to_month = {
-                "Q1": 1,
-                "Q2": 4,
-                "Q3": 7,
-                "Q4": 10
-            }
-            start_month = quarter_to_month[quarter]
-            start_date = pd.to_datetime(f"{start_month}-01-{year}", format="%m-%d-%Y")
-            for period in range(len(snapshot_values),end_period+1):
-                new_date_obj = start_date + pd.DateOffset(months=period * 3)
-                new_quarter = (new_date_obj.month - 1) // 3 + 1
-                new_quarter_year_str = f"Q{new_quarter}-{new_date_obj.year}"
-                dates_of_forecast_values.append(new_quarter_year_str)
-        elif granularity == "year":                                     # format of %Y ("2012")
-            if seasonality_length == granularity:
-                seasonality_length = 1
-            data_start = pd.to_datetime(len(snapshot_values), format="%Y")
-            data_start_year = data_start.year
-            for period in range(start_period, end_period+1):      
-                dates_of_forecast_values.append(data_start_year + period)
 
-    ###### Setting custom seasonality length if specified (uses seasonality_length)
+    try:
+        ###### Creating formatted dates for the result table (uses end_period, start_period, data_start)
+        if start_period <= len(snapshot_values):
+            if granularity == "day":                                    # format of %m-%d-%Y ("06-12-2012")
+                if seasonality_length == granularity:
+                    seasonality_length = 7
+                data_start = pd.to_datetime(data_start)                   
+                for period in range(start_period,end_period+1):
+                    new_date_obj = data_start + pd.DateOffset(days=period)
+                    new_date_str = new_date_obj.strftime("%m-%d-%Y")
+                    dates_of_forecast_values.append(new_date_str)
+            elif granularity == "week":                                    # format of %m-%d-%Y ("06-12-2012")
+                if seasonality_length == granularity:
+                    seasonality_length = 52
+                data_start = pd.to_datetime(data_start)
+                for period in range(start_period,end_period+1):
+                    new_date_obj = data_start + pd.DateOffset(weeks=period)
+                    new_date_str = new_date_obj.strftime("%m-%d-%Y")
+                    dates_of_forecast_values.append(new_date_str)
+            elif granularity == "month":                                   # format of %b-%y ("Jun-12")
+                if seasonality_length == granularity:
+                    seasonality_length = 12
+                data_start = pd.to_datetime(data_start, format="%b-%y")
+                data_start_month_year = data_start.strftime("%b-%y")
+                for period in range(start_period, end_period+1):      
+                    dates_of_forecast_values.append((data_start + pd.DateOffset(months=period)).strftime("%b-%y"))
+            elif granularity == "quarter":                                 # custom format of "Q1-2020"
+                if seasonality_length == granularity:
+                    seasonality_length = 4
+                quarter, year = data_start.split("-")
+                year = int(year)
+                quarter_to_month = {
+                    "Q1": 1,
+                    "Q2": 4,
+                    "Q3": 7,
+                    "Q4": 10
+                }
+                start_month = quarter_to_month[quarter]
+                start_date = pd.to_datetime(f"{start_month}-01-{year}", format="%m-%d-%Y")
+                for period in range(start_period,end_period+1):
+                    new_date_obj = start_date + pd.DateOffset(months=period * 3)
+                    new_quarter = (new_date_obj.month - 1) // 3 + 1
+                    new_quarter_year_str = f"Q{new_quarter}-{new_date_obj.year}"
+                    dates_of_forecast_values.append(new_quarter_year_str)
+            elif granularity == "year":                                     # format of %Y ("2012")
+                if seasonality_length == granularity:
+                    seasonality_length = 1
+                data_start = pd.to_datetime(data_start, format="%Y")
+                data_start_year = data_start.year
+                for period in range(start_period, end_period+1):      
+                    dates_of_forecast_values.append(data_start_year + period)
+        elif start_period > len(snapshot_values):
+            if granularity == "day":                                    # format of %m-%d-%Y ("06-12-2012")
+                if seasonality_length == granularity:
+                    seasonality_length = 7
+                data_start = pd.to_datetime(data_start)                   
+                for period in range(len(snapshot_values),end_period+1):
+                    new_date_obj = data_start + pd.DateOffset(days=period)
+                    new_date_str = new_date_obj.strftime("%m-%d-%Y")
+                    dates_of_forecast_values.append(new_date_str)
+            elif granularity == "week":                                    # format of %m-%d-%Y ("06-12-2012")
+                if seasonality_length == granularity:
+                    seasonality_length = 52
+                data_start = pd.to_datetime(data_start)
+                for period in range(len(snapshot_values),end_period+1):
+                    new_date_obj = data_start + pd.DateOffset(weeks=period)
+                    new_date_str = new_date_obj.strftime("%m-%d-%Y")
+                    dates_of_forecast_values.append(new_date_str)
+            elif granularity == "month":                                   # format of %b-%y ("Jun-12")
+                if seasonality_length == granularity:
+                    seasonality_length = 12
+                data_start = pd.to_datetime(data_start, format="%b-%y")
+                data_start_month_year = data_start.strftime("%b-%y")
+                for period in range(len(snapshot_values), end_period+1):      
+                    dates_of_forecast_values.append((data_start + pd.DateOffset(months=period)).strftime("%b-%y"))
+            elif granularity == "quarter":                                 # custom format of "Q1-2020"
+                if seasonality_length == granularity:
+                    seasonality_length = 4
+                quarter, year = data_start.split("-")
+                year = int(year)
+                quarter_to_month = {
+                    "Q1": 1,
+                    "Q2": 4,
+                    "Q3": 7,
+                    "Q4": 10
+                }
+                start_month = quarter_to_month[quarter]
+                start_date = pd.to_datetime(f"{start_month}-01-{year}", format="%m-%d-%Y")
+                for period in range(len(snapshot_values),end_period+1):
+                    new_date_obj = start_date + pd.DateOffset(months=period * 3)
+                    new_quarter = (new_date_obj.month - 1) // 3 + 1
+                    new_quarter_year_str = f"Q{new_quarter}-{new_date_obj.year}"
+                    dates_of_forecast_values.append(new_quarter_year_str)
+            elif granularity == "year":                                     # format of %Y ("2012")
+                if seasonality_length == granularity:
+                    seasonality_length = 1
+                data_start = pd.to_datetime(len(snapshot_values), format="%Y")
+                data_start_year = data_start.year
+                for period in range(start_period, end_period+1):      
+                    dates_of_forecast_values.append(data_start_year + period)
+    except:
+        status = "Error: Something went wrong when creating the dates for forecast values."
+        forecast_table = None
+    else:
+        ###### Setting custom seasonality length if specified (uses seasonality_length)
 
-    if seasonality_length != granularity:
-        seasonality_length = seasonality_length
-    
-    ###### Complexity and order settings for auto_arima (uses complexity)
+        if seasonality_length != granularity:
+            seasonality_length = seasonality_length
+        
+        ###### Complexity and order settings for auto_arima (uses complexity)
 
-    if complexity == "default":
-        start_p = 2
-        max_p = 5
-        max_order = 5
-        D = None
-    elif complexity == "low":
-        start_p = 1
-        max_p = 3
-        max_order = 4
-        D = 0
-    elif complexity == "medium":
-        start_p = 3
-        max_p = 6
-        max_order = 7
-        D = 1
-    elif complexity == "high":
-        start_p = 6
-        max_p = 9
-        max_order = 10
-        D = 2
-    
-    ###### ARIMA modeling
-    
-    # set training data
-    training_data = data[:start_period]
-    
-    # determine best p,d,q ARIMA order values using pmdarima
-    arima_model = pm.auto_arima(training_data, m = seasonality_length, start_p = start_p, max_p = max_p, max_order = max_order, D = D)
-    
-    # fit the model on the data
-    arima_model.fit(training_data)
+        if complexity == "default":
+            start_p = 2
+            max_p = 5
+            max_order = 5
+            D = None
+        elif complexity == "low":
+            start_p = 1
+            max_p = 3
+            max_order = 4
+            D = 0
+        elif complexity == "medium":
+            start_p = 3
+            max_p = 6
+            max_order = 7
+            D = 1
+        elif complexity == "high":
+            start_p = 6
+            max_p = 9
+            max_order = 10
+            D = 2
+        
+        ###### ARIMA modeling
+        try:
+            # set training data
+            training_data = data[:start_period]
+            # determine best p,d,q ARIMA order values using pmdarima
+            arima_model = pm.auto_arima(training_data, m = seasonality_length, start_p = start_p, max_p = max_p, max_order = max_order, D = D)
+        except ValueError:
+            status = "Error: Not enough training data to forecast with current complexity and seasonality length."
+            forecast_table = None
+        except IndexError:
+            status = "Error: Not enough training data to forecast with current complexity and seasonality length."
+            forecast_table = None
+        except Exception:
+            status = "Error: Something went wrong when finding ideal parameters for the ARIMA model."
+            forecast_table = None
+        else:
+            try:
+                # fit the model on the data
+                arima_model.fit(training_data)
+            except:
+                status = "Error: Something went wrong when fitting the ARIMA model."
+                forecast_table = None
+            else:
+                try:
+                    # forecast the values for the specified periods
+                    if start_period <= len(snapshot_values):
+                        forecast_values = arima_model.predict(n_periods = end_period - start_period + 1)
+                    elif start_period > len(snapshot_values):
+                        forecast_values = arima_model.predict(n_periods = end_period - len(snapshot_values) + 1)
+                        forecast_values[:(start_period-len(snapshot_values))+1] = None
+                except:
+                    status = "Error: Something went wrong when forecasting the values."
+                    forecast_table = None
+                else:
+                    ###### Combine the two into a pandas table with both the period labels and predicted values
 
-    # forecast the values for the specified periods
-    if start_period <= len(snapshot_values):
-        forecast_values = arima_model.predict(n_periods = end_period - start_period + 1)
-    elif start_period > len(snapshot_values):
-        forecast_values = arima_model.predict(n_periods = end_period - len(snapshot_values) + 1)
-        forecast_values[:(start_period-len(snapshot_values))+1] = None
+                    try:
+                        forecast_column_name = f"{complexity.capitalize()} Complexity Prediction"
+
+                        forecast_table = {
+                        'Period': dates_of_forecast_values,
+                        forecast_column_name: forecast_values
+                        }
+
+                        forecast_table = pd.DataFrame(forecast_table)
+                    except:
+                        status = "Error: Something went wrong when creating the forecast table."
+                        forecast_table = None
     
-    ###### Combine the two into a pandas table with both the period labels and predicted values
-
-    forecast_column_name = f"{complexity.capitalize()} Complexity Prediction"
-
-    forecast_table = {
-    'Period': dates_of_forecast_values,
-    forecast_column_name: forecast_values
-    }
-
-    forecast_table = pd.DataFrame(forecast_table)
-    
-    return(forecast_table)
+    return(status, forecast_table)
 
 ############ Custom function to convert quarter format to datetime ############
 def quarter_to_datetime(quarter_str):
@@ -333,22 +359,24 @@ if st.button("Run"):
 
     ###### Run the forecast
     if snapshot_values and complexity and granularity and data_start and start_period and end_period:
-        try:
-            snapshot_values = edited_table["snapshot_values"].tolist()
-            Periods = edited_table["Period"].tolist()
+        snapshot_values = edited_table["snapshot_values"].tolist()
+        Periods = edited_table["Period"].tolist()
 
-            data = snapshot_values
-            start_time = time.time()
-            result = forecast(start_period=start_period,
-                            end_period=end_period,
-                            complexity=complexity,
-                            data=data,
-                            granularity=granularity,
-                            seasonality_length=seasonality_length,
-                            data_start=data_start)
-            end_time = time.time()
-            execution_time = end_time - start_time
+        data = snapshot_values
+        start_time = time.time()
+        result = forecast(start_period=start_period,
+                        end_period=end_period,
+                        complexity=complexity,
+                        data=data,
+                        granularity=granularity,
+                        seasonality_length=seasonality_length,
+                        data_start=data_start)
+        end_time = time.time()
+        execution_time = end_time - start_time
 
+        if result[0] == "Success":
+            # Set result to the outputted forecast_table
+            result = result[1]
             # Display execution time
             st.write(f"Execution Time: {execution_time:.4f} seconds")
 
@@ -381,6 +409,9 @@ if st.button("Run"):
                 merged_data["Period"] = merged_data["Period"].dt.strftime("%Y")
             # Now, merged_data is sorted chronologically and contains the date markers in the desired string format
 
+
+            valid_complexities = merged_data.columns.tolist()[2:]
+
             # Plot the line chart using Plotly
 
             fig = go.Figure()
@@ -388,10 +419,11 @@ if st.button("Run"):
             fig.add_trace(go.Scatter(x=merged_data["Period"], y=merged_data["snapshot_values"],
                                     mode='lines', name='Historical Data'))
 
-            fig.add_trace(go.Scatter(x=merged_data["Period"], y=merged_data[f"{complexity.capitalize()} Prediction"],
-                                    mode='lines', name='Forecasted Data'))
+            for valid in valid_complexities:
+                fig.add_trace(go.Scatter(x=merged_data["Period"], y=merged_data[valid],
+                                        mode='lines', name=valid))
 
-            fig.update_layout(title=f'{granularity.capitalize()}ly data, {complexity.capitalize()} complexity',
+            fig.update_layout(title=f'{granularity.capitalize()}ly data, All Complexity',
                             xaxis_title='Period', yaxis_title='Quantity')
 
             st.plotly_chart(fig)
@@ -399,9 +431,9 @@ if st.button("Run"):
             # Display the table of forecasted values
             st.subheader("Historical and Forecasted Values")
             st.dataframe(merged_data)
-
-        except:
-            st.error("Not enough training data to forecast with current complexity and seasonality length.")
+        
+        elif result[0] != "Success":
+            st.error(result[0])
 
     else:
         st.error("Please provide all the required inputs.")
@@ -452,94 +484,89 @@ if st.button("Run All"):
 
     ###### Run the forecast
     if snapshot_values and complexity and granularity and data_start and start_period and end_period:
-        try:
-            snapshot_values = edited_table["snapshot_values"].tolist()
-            Periods = edited_table["Period"].tolist()
+        snapshot_values = edited_table["snapshot_values"].tolist()
+        Periods = edited_table["Period"].tolist()
 
-            data = snapshot_values
-            merged_data = edited_table
+        data = snapshot_values
+        merged_data = edited_table
 
-            for complexity in complexity_options:
-                try:
-                    start_time = time.time()
-                    result = forecast(start_period=start_period,
-                                    end_period=end_period,
-                                    complexity=complexity,
-                                    data=data,
-                                    granularity=granularity,
-                                    seasonality_length=seasonality_length,
-                                    data_start=data_start)
-                    end_time = time.time()
-                    execution_time = end_time - start_time
+        for complexity in complexity_options:
+            start_time = time.time()
+            result = forecast(start_period=start_period,
+                            end_period=end_period,
+                            complexity=complexity,
+                            data=data,
+                            granularity=granularity,
+                            seasonality_length=seasonality_length,
+                            data_start=data_start)
+            end_time = time.time()
+            execution_time = end_time - start_time
 
-                    # Display execution time
-                    st.write(f"Execution Time of {complexity.capitalize()} Complexity: {execution_time:.4f} seconds")
-                except:
-                    st.write(f"{complexity.capitalize()} Complexity was not successful")
-                    continue
-
+            if result[0] == "Success":
+                result = result[1]
+                # Display execution time
+                st.write(f"Execution Time of {complexity.capitalize()} Complexity: {execution_time:.4f} seconds")
                 # Merge historical data and forecasted data on the "Period" column
                 if granularity != "year":
                     merged_data = pd.merge(merged_data, result, on="Period", how="outer")
                 if granularity == "year":
                     merged_data = pd.concat([merged_data, result], axis=0)
+            elif result[1] != "Success":
+                st.write(f"{complexity.capitalize()} Complexity was not successful")
 
-            valid_complexities = merged_data.columns.tolist()[2:]
+        valid_complexities = merged_data.columns.tolist()[2:]
 
-            ###### Sorting merged_data chronologically
-            # Convert the Period column to datetime
-            if granularity == "day" or granularity == "week":
-                merged_data["Period"] = pd.to_datetime(merged_data["Period"], format="%m-%d-%Y")
-            elif granularity == "month":
-                merged_data["Period"] = pd.to_datetime(merged_data["Period"], format="%b-%y")
-            elif granularity == "quarter":
-                merged_data["Period"] = merged_data["Period"].apply(quarter_to_datetime)
-            elif granularity == "year":
-                merged_data["Period"] = pd.to_datetime(merged_data["Period"], format="%Y")
-            # Sort the table chronologically based on the Periods
-            merged_data = merged_data.sort_values(by="Period")
-            # Convert the datetime objects back to the desired string format
-            if granularity == "day" or granularity == "week":
-                merged_data["Period"] = merged_data["Period"].dt.strftime("%m-%d-%Y")
-            elif granularity == "month":
-                merged_data["Period"] = merged_data["Period"].dt.strftime("%b-%y")
-            elif granularity == "quarter":
-                merged_data["Period"] = merged_data["Period"].apply(datetime_to_quarter)
-            elif granularity == "year":
-                merged_data["Period"] = merged_data["Period"].dt.strftime("%Y")
-            # Now, merged_data is sorted chronologically and contains the date markers in the desired string format
+        ###### Sorting merged_data chronologically
+        # Convert the Period column to datetime
+        if granularity == "day" or granularity == "week":
+            merged_data["Period"] = pd.to_datetime(merged_data["Period"], format="%m-%d-%Y")
+        elif granularity == "month":
+            merged_data["Period"] = pd.to_datetime(merged_data["Period"], format="%b-%y")
+        elif granularity == "quarter":
+            merged_data["Period"] = merged_data["Period"].apply(quarter_to_datetime)
+        elif granularity == "year":
+            merged_data["Period"] = pd.to_datetime(merged_data["Period"], format="%Y")
+        # Sort the table chronologically based on the Periods
+        merged_data = merged_data.sort_values(by="Period")
+        # Convert the datetime objects back to the desired string format
+        if granularity == "day" or granularity == "week":
+            merged_data["Period"] = merged_data["Period"].dt.strftime("%m-%d-%Y")
+        elif granularity == "month":
+            merged_data["Period"] = merged_data["Period"].dt.strftime("%b-%y")
+        elif granularity == "quarter":
+            merged_data["Period"] = merged_data["Period"].apply(datetime_to_quarter)
+        elif granularity == "year":
+            merged_data["Period"] = merged_data["Period"].dt.strftime("%Y")
+        # Now, merged_data is sorted chronologically and contains the date markers in the desired string format
 
-            # Plot the line chart using Plotly
+        # Plot the line chart using Plotly
 
-            fig = go.Figure()
+        fig = go.Figure()
 
-            fig.add_trace(go.Scatter(x=merged_data["Period"], y=merged_data["snapshot_values"],
-                                    mode='lines', name='Historical Data'))
+        fig.add_trace(go.Scatter(x=merged_data["Period"], y=merged_data["snapshot_values"],
+                                mode='lines', name='Historical Data'))
 
-            for valid in valid_complexities:
-                fig.add_trace(go.Scatter(x=merged_data["Period"], y=merged_data[valid],
-                                        mode='lines', name=valid))
+        for valid in valid_complexities:
+            fig.add_trace(go.Scatter(x=merged_data["Period"], y=merged_data[valid],
+                                    mode='lines', name=valid))
 
-            fig.update_layout(title=f'{granularity.capitalize()}ly data, All Complexity',
-                            xaxis_title='Period', yaxis_title='Quantity')
+        fig.update_layout(title=f'{granularity.capitalize()}ly data, All Complexity',
+                        xaxis_title='Period', yaxis_title='Quantity')
 
-            st.plotly_chart(fig)
+        st.plotly_chart(fig)
 
-            # Display the table of forecasted values
-            st.subheader("Historical and Forecasted Values")
-            st.dataframe(merged_data)
+        # Display the table of forecasted values
+        st.subheader("Historical and Forecasted Values")
+        st.dataframe(merged_data)
 
-            # Allow user to download results
-            csv = convert_df(merged_data)
-            st.download_button(
-                "Download Results",
-                csv,
-                "arima_results.csv",
-                "text/csv"
-            )
-
-        except:
-            st.error("Not enough training data to forecast with current complexity and seasonality length.")
+        # Allow user to download results
+        csv = convert_df(merged_data)
+        st.download_button(
+            "Download Results",
+            csv,
+            "arima_results.csv",
+            "text/csv"
+        )
 
     else:
         st.error("Please provide all the required inputs.")
