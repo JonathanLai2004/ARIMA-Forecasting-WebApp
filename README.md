@@ -1,4 +1,4 @@
-# APP CAN BE FOUND AT https://arimatesting.streamlit.app/
+APP CAN BE FOUND AT https://arimatesting.streamlit.app/
 
 ## ARIMA Forecasting Test App
 In this app, you can copy and paste rows of data from spreadsheets to generate ARIMA forecasts from. You can configure the start period, end period, and complexity of the forecast. Granularity should be set according to the data inputted:
